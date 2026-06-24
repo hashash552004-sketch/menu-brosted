@@ -1,0 +1,22 @@
+{
+  "name": "menu-syria",
+  "version": "1.0.0",
+  "description": "موقع منيو بروستد الزواق",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node -e \"require('fs').mkdirSync('public/uploads',{recursive:true})\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.0.0",
+    "pg": "^8.22.0"
+  }
+}

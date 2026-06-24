@@ -1,0 +1,4 @@
+node_modules/
+menu.db
+.env
+public/uploads/

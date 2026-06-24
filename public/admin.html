@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم - بروستد الزواق</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="logo-area">
+        <img src="logo.jpg" alt="بروستد الزواق" class="logo" />
+        <div class="site-title">
+          <h1>منيو بروستد الزواق</h1>
+          <span class="site-title-en">Broasted Al-Zawq Menu</span>
+        </div>
+      </div>
+      <a href="index.html" class="admin-link">⬅ العودة للمنيو</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Login -->
+    <section class="admin-login-section" id="loginSection">
+      <h2>تسجيل الدخول</h2>
+      <input type="password" id="passwordInput" placeholder="كلمة السر" />
+      <button class="btn btn-primary" id="loginBtn">دخول</button>
+      <p id="loginError" style="color:#c0392b;margin-top:10px;display:none;"></p>
+    </section>
+
+    <!-- Admin panel -->
+    <section class="admin-panel" id="adminPanel">
+      <div class="admin-controls">
+        <button class="btn btn-success" id="addDishBtn">➕ إضافة طبق</button>
+        <button class="btn btn-warning" id="addCategoryBtn">📂 إضافة قسم</button>
+        <button class="btn btn-secondary" id="changePwBtn">🔑 تغيير كلمة السر</button>
+        <button class="btn btn-primary" id="showQrBtn">📱 QR كود</button>
+        <button class="btn btn-secondary" id="logoutBtn">🚪 تسجيل الخروج</button>
+      </div>
+
+      <!-- Dishes table -->
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>الصورة</th>
+            <th>الاسم</th>
+            <th>القسم</th>
+            <th>السعر</th>
+            <th>الوقت</th>
+            <th>تحكم</th>
+          </tr>
+        </thead>
+        <tbody id="dishesBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">إضافة طبق</h3>
+      <form id="dishForm" enctype="multipart/form-data">
+        <input type="hidden" id="editId" />
+
+        <label>الاسم (عربي)</label>
+        <input type="text" id="nameAr" required />
+
+        <label>الاسم (إنجليزي)</label>
+        <input type="text" id="nameEn" />
+
+        <label>الوصف (عربي)</label>
+        <textarea id="descAr"></textarea>
+
+        <label>الوصف (إنجليزي)</label>
+        <textarea id="descEn"></textarea>
+
+        <label>السعر (ل.س)</label>
+        <input type="number" id="price" required />
+
+        <label>مدة الطهي (دقيقة)</label>
+        <input type="number" id="cookingTime" />
+
+        <label>القسم</label>
+        <select id="categoryId" required></select>
+
+        <label>الصورة</label>
+        <input type="file" id="image" accept="image/*" />
+        <div id="imagePreview" style="margin-top:8px;display:none;">
+          <img id="previewImg" style="width:80px;height:80px;border-radius:8px;object-fit:cover;border:2px solid var(--border);" />
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category modal -->
+  <div class="modal-overlay" id="catModalOverlay">
+    <div class="modal">
+      <h3>إضافة قسم جديد</h3>
+      <form id="catForm">
+        <label>الاسم (عربي)</label>
+        <input type="text" id="catNameAr" required />
+        <label>الاسم (إنجليزي)</label>
+        <input type="text" id="catNameEn" required />
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="cancelCatBtn">إلغاء</button>
+          <button type="submit" class="btn btn-success">إضافة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- QR code modal -->
+  <div class="modal-overlay" id="qrModalOverlay">
+    <div class="modal" style="text-align:center;">
+      <h3>📱 امسح QR كود للدخول للموقع</h3>
+      <p style="color:#888;margin-bottom:16px;" id="qrUrlText">جاري التحميل...</p>
+      <div id="qrContainer" style="background:#fff;padding:16px;border-radius:12px;display:inline-block;">
+        <img id="qrImage" src="" alt="QR Code" style="width:280px;height:280px;image-rendering:pixelated;" />
+      </div>
+      <p style="margin-top:14px;font-size:.85rem;color:#999;">للاتصال بنفس شبكة WiFi</p>
+      <div class="btn-row" style="justify-content:center;">
+        <button type="button" class="btn btn-secondary" id="closeQrBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password change modal -->
+  <div class="modal-overlay" id="pwModalOverlay">
+    <div class="modal">
+      <h3>🔑 تغيير كلمة السر</h3>
+      <form id="pwForm">
+        <label>كلمة السر الحالية</label>
+        <input type="password" id="currentPassword" required />
+        <label>كلمة السر الجديدة</label>
+        <input type="password" id="newPassword" required minlength="4" />
+        <label>تأكيد كلمة السر الجديدة</label>
+        <input type="password" id="confirmPassword" required minlength="4" />
+        <p id="pwError" style="color:#c0392b;margin-top:6px;display:none;"></p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="cancelPwBtn">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

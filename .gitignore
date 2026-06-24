@@ -1,4 +1,7 @@
 node_modules/
 menu.db
+menu.db-shm
+menu.db-wal
 .env
 public/uploads/
+allow_firewall.bat

@@ -148,35 +148,56 @@ async function editDish(id) {
 // ------------------------------------------------------------
 document.getElementById('dishForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'جاري الحفظ...';
 
-  const id = document.getElementById('editId').value;
-  const fd = new FormData();
-  fd.append('name_ar', document.getElementById('nameAr').value);
-  fd.append('name', document.getElementById('nameEn').value);
-  fd.append('description_ar', document.getElementById('descAr').value);
-  fd.append('description', document.getElementById('descEn').value);
-  fd.append('price', document.getElementById('price').value);
-  fd.append('cooking_time', document.getElementById('cookingTime').value);
-  fd.append('category_id', document.getElementById('categoryId').value);
+  try {
+    const id = document.getElementById('editId').value;
+    const fd = new FormData();
+    fd.append('name_ar', document.getElementById('nameAr').value);
+    fd.append('name', document.getElementById('nameEn').value);
+    fd.append('description_ar', document.getElementById('descAr').value);
+    fd.append('description', document.getElementById('descEn').value);
+    fd.append('price', document.getElementById('price').value);
+    fd.append('cooking_time', document.getElementById('cookingTime').value);
+    fd.append('category_id', document.getElementById('categoryId').value);
 
-  const fileInput = document.getElementById('image');
-  if (fileInput.files.length) fd.append('image', fileInput.files[0]);
+    const fileInput = document.getElementById('image');
+    if (fileInput.files.length) {
+      if (fileInput.files[0].size > 5 * 1024 * 1024) {
+        alert('الصورة كبيرة جداً (أقصى حد 5MB)');
+        btn.disabled = false;
+        btn.textContent = id ? 'تحديث' : 'إضافة';
+        return;
+      }
+      fd.append('image', fileInput.files[0]);
+    }
 
-  let res;
-  if (id) {
-    res = await fetch('/api/admin/dishes/' + id, { method: 'PUT', headers: authHeaders(), body: fd });
-  } else {
-    res = await fetch('/api/admin/dishes', { method: 'POST', headers: authHeaders(), body: fd });
+    let res;
+    if (id) {
+      res = await fetch('/api/admin/dishes/' + id, { method: 'PUT', headers: authHeaders(), body: fd });
+    } else {
+      res = await fetch('/api/admin/dishes', { method: 'POST', headers: authHeaders(), body: fd });
+    }
+
+    if (!res.ok) {
+      let msg;
+      try { const err = await res.json(); msg = err.error || res.statusText; } catch { msg = 'خطأ ' + res.status; }
+      alert('خطأ: ' + msg);
+      btn.disabled = false;
+      btn.textContent = id ? 'تحديث' : 'إضافة';
+      return;
+    }
+
+    document.getElementById('modalOverlay').classList.remove('active');
+    loadDishes();
+  } catch (err) {
+    alert('فشل الاتصال بالخادم: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = document.getElementById('editId').value ? 'تحديث' : 'إضافة';
   }
-
-  if (!res.ok) {
-    const err = await res.json();
-    alert('خطأ: ' + (err.error || 'غير معروف'));
-    return;
-  }
-
-  document.getElementById('modalOverlay').classList.remove('active');
-  loadDishes();
 });
 
 // ------------------------------------------------------------

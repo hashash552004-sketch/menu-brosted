@@ -218,7 +218,7 @@ async function loadDishes() {
   const tab = document.querySelector('.tab.active').dataset.tab;
   const search = document.getElementById('searchInput').value;
   const cat = document.getElementById('categoryFilter').value;
-  const priceMax = Number(document.getElementById('priceRange').value);
+  const priceMax = Number(document.getElementById('priceMax').value) || Infinity;
 
   if (tab === 'favorites') {
     const ids = favorites;
@@ -261,17 +261,14 @@ async function loadDishes() {
   if (!dishes.length) { grid.innerHTML = '<p class="empty">لا توجد أطباق مطابقة</p>'; return; }
   dishes.forEach(d => grid.appendChild(renderDishCard(d)));
 
-  // update max price
-  if (dishes.length) {
-    const m = Math.max(...dishes.map(d => d.price));
-    if (m > maxPrice) {
-      maxPrice = m;
-      const range = document.getElementById('priceRange');
-      range.max = maxPrice;
-      range.value = maxPrice;
-      document.getElementById('priceLabel').textContent = Number(maxPrice).toLocaleString();
+    // update max price placeholder
+    if (dishes.length) {
+      const m = Math.max(...dishes.map(d => d.price));
+      if (m > maxPrice) {
+        maxPrice = m;
+        document.getElementById('priceMax').placeholder = 'أقصى سعر (أقصى ' + Number(m).toLocaleString() + ')';
+      }
     }
-  }
 }
 
 // ------------------------------------------------------------
@@ -321,10 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('searchInput').addEventListener('input', loadDishes);
   document.getElementById('categoryFilter').addEventListener('change', loadDishes);
-  document.getElementById('priceRange').addEventListener('input', () => {
-    document.getElementById('priceLabel').textContent = Number(document.getElementById('priceRange').value).toLocaleString();
-    loadDishes();
-  });
+  document.getElementById('priceMax').addEventListener('input', loadDishes);
 
   // Tabs
   document.querySelectorAll('.tab').forEach(tab => {

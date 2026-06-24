@@ -33,7 +33,7 @@ if (IS_SQLITE) {
       await client.query('CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL)');
       await client.query('CREATE TABLE IF NOT EXISTS dishes (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL, description TEXT, description_ar TEXT, price REAL NOT NULL, cooking_time INTEGER, image TEXT, badge TEXT DEFAULT \'\', category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE, created_at TIMESTAMP DEFAULT NOW())');
       await client.query('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
-      await client.query('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, customer_name TEXT, phone TEXT, notes TEXT, total REAL NOT NULL, status TEXT DEFAULT \'pending\', created_at TIMESTAMP DEFAULT NOW())');
+      await client.query('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, customer_name TEXT, phone TEXT, notes TEXT, total REAL NOT NULL, payment_method TEXT DEFAULT \'cash\', status TEXT DEFAULT \'pending\', created_at TIMESTAMP DEFAULT NOW())');
       await client.query('CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE, dish_id INTEGER NOT NULL REFERENCES dishes(id), dish_name_ar TEXT NOT NULL, quantity INTEGER NOT NULL, price REAL NOT NULL)');
     } finally {
       client.release();
@@ -115,6 +115,7 @@ async function initDB() {
         phone TEXT,
         notes TEXT,
         total REAL NOT NULL,
+        payment_method TEXT DEFAULT 'cash',
         status TEXT DEFAULT 'pending',
         created_at TEXT DEFAULT (datetime('now'))
       );
@@ -386,14 +387,14 @@ app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
 //  10. Orders API
 // ------------------------------------------------------------
 app.post('/api/orders', async (req, res) => {
-  const { customer_name, phone, notes, items } = req.body;
+  const { customer_name, phone, notes, payment_method, items } = req.body;
   if (!customer_name || !items || !items.length) {
     return res.status(400).json({ error: 'الاسم والأصناف مطلوبة' });
   }
   const total = items.reduce((s, i) => s + Number(i.price) * Number(i.quantity), 0);
   const orderId = await qInsert(
-    'INSERT INTO orders (customer_name, phone, notes, total) VALUES (?,?,?,?)',
-    [customer_name, phone || '', notes || '', total]
+    'INSERT INTO orders (customer_name, phone, notes, total, payment_method) VALUES (?,?,?,?,?)',
+    [customer_name, phone || '', notes || '', total, payment_method || 'cash']
   );
   for (const item of items) {
     await q(

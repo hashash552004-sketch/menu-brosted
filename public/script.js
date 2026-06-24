@@ -274,17 +274,27 @@ async function loadDishes() {
 // ------------------------------------------------------------
 //  WhatsApp order
 // ------------------------------------------------------------
+function getPaymentMethod() {
+  const active = document.querySelector('.payment-option.active');
+  return active ? active.dataset.method : 'cash';
+}
+
+function getPaymentLabel(m) {
+  return m === 'sham' ? '💳 شام كاش' : '💵 عند الاستلام';
+}
+
 async function sendWhatsApp() {
   if (!cart.items.length) return;
   const res = await fetch('/api/settings/whatsapp_number');
   const data = await res.json();
   const number = data.value;
   if (!number) { alert('رقم واتساب غير مضبوط في لوحة التحكم'); return; }
+  const payment = getPaymentLabel(getPaymentMethod());
   let msg = '🍽 طلب جديد من منيو بروستد الزواق\n------------------\n';
   cart.items.forEach(i => {
     msg += `${i.dish_name_ar} × ${i.quantity} = ${Number(i.price * i.quantity).toLocaleString()} ل.س\n`;
   });
-  msg += `------------------\n💰 المجموع: ${Number(getCartTotal()).toLocaleString()} ل.س`;
+  msg += `------------------\n💰 المجموع: ${Number(getCartTotal()).toLocaleString()} ل.س\n💳 الدفع: ${payment}`;
   const url = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');
 }
@@ -292,7 +302,7 @@ async function sendWhatsApp() {
 // ------------------------------------------------------------
 //  Submit order to server
 // ------------------------------------------------------------
-async function submitOrder(name, phone, notes) {
+async function submitOrder(name, phone, notes, payment_method) {
   const items = cart.items.map(i => ({
     dish_id: i.dish_id,
     dish_name_ar: i.dish_name_ar,
@@ -302,7 +312,7 @@ async function submitOrder(name, phone, notes) {
   const res = await fetch('/api/orders', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ customer_name: name, phone, notes, items }),
+    body: JSON.stringify({ customer_name: name, phone, notes, payment_method, items }),
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'فشل الإرسال'); }
   return res.json();
@@ -356,10 +366,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const orderModal = document.getElementById('orderModal');
   const orderForm = document.getElementById('orderForm');
 
+  // Payment method
+  document.querySelectorAll('.payment-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      const area = document.getElementById('paymentImageArea');
+      area.style.display = opt.dataset.method === 'sham' ? 'block' : 'none';
+    });
+  });
+
   document.getElementById('orderBtn').addEventListener('click', () => {
     document.getElementById('orderName').value = '';
     document.getElementById('orderPhone').value = '';
     document.getElementById('orderNotes').value = '';
+    document.querySelector('.payment-option[data-method="cash"]').click();
     renderCartPanel();
     closeCart();
     orderModal.classList.add('active');
@@ -385,7 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
       await submitOrder(
         document.getElementById('orderName').value,
         document.getElementById('orderPhone').value,
-        document.getElementById('orderNotes').value
+        document.getElementById('orderNotes').value,
+        getPaymentMethod()
       );
       orderModal.classList.remove('active');
       document.getElementById('successModal').classList.add('active');

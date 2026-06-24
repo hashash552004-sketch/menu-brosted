@@ -78,6 +78,21 @@
         <input type="text" id="orderName" required />
         <label>رقم الهاتف</label>
         <input type="tel" id="orderPhone" />
+        <div class="payment-section">
+          <label>طريقة الدفع</label>
+          <div class="payment-options">
+            <label class="payment-option active" data-method="cash">
+              <input type="radio" name="payment" value="cash" checked /> 💵 عند الاستلام
+            </label>
+            <label class="payment-option" data-method="sham">
+              <input type="radio" name="payment" value="sham" /> 💳 شام كاش
+            </label>
+          </div>
+          <div class="payment-image-area" id="paymentImageArea">
+            <img src="/payment.jpg" alt="شام كاش" id="paymentImage" />
+            <p style="color:#888;font-size:.8rem;margin-top:6px;">حول المبلغ على الرقم أعلاه وأرسل صورة الإيصال</p>
+          </div>
+        </div>
         <label>ملاحظات</label>
         <textarea id="orderNotes"></textarea>
         <div id="orderSummary" style="margin:16px 0;padding:14px;background:#f5f5f0;border-radius:8px;font-size:.9rem;"></div>

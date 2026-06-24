@@ -60,6 +60,7 @@ async function loadOrders() {
     orders.forEach(order => {
       const card = document.createElement('div');
       card.className = 'order-card';
+      const payLabel = order.payment_method === 'sham' ? '💳 شام كاش' : '💵 عند الاستلام';
       card.innerHTML = `
         <div class="order-header">
           <span class="order-id">طلب #${order.id}</span>
@@ -68,6 +69,7 @@ async function loadOrders() {
         <div class="order-info">
           <span>👤 ${order.customer_name}</span>
           <span>📞 ${order.phone || '—'}</span>
+          <span>💳 ${payLabel}</span>
           <span>📅 ${formatDate(order.created_at)}</span>
         </div>
         <div class="order-items">

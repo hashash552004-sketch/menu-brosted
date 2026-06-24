@@ -12,28 +12,91 @@
       <div class="logo-area">
         <img src="logo.jpg" alt="بروستد الزواق" class="logo" />
         <div class="site-title">
-          <h1>منيو بروستد الزواق</h1>
-          <span class="site-title-en">Broasted Al-Zawq Menu</span>
+          <h1>بروستد الزواق</h1>
+          <span class="site-title-en">Broasted Al-Zawq</span>
         </div>
       </div>
-      <a href="admin.html" class="admin-link">🔐 لوحة التحكم</a>
+      <div class="header-actions">
+        <a href="admin.html" class="admin-link" title="لوحة التحكم">🔐</a>
+        <button id="cartToggle" class="cart-toggle">
+          🛒 <span id="cartCount" class="cart-badge">0</span>
+        </button>
+      </div>
     </div>
   </header>
 
   <main class="container">
-    <!-- Filters -->
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="all">كل الأطباق</button>
+      <button class="tab" data-tab="popular">⭐ الأكثر طلبًا</button>
+      <button class="tab" data-tab="favorites">❤️ المفضلة</button>
+    </div>
+
     <section class="filters">
       <input type="text" id="searchInput" placeholder="🔍 ابحث عن طبق..." />
       <select id="categoryFilter">
         <option value="">جميع الأقسام</option>
       </select>
+      <div class="price-filter">
+        <label>السعر: حتى <span id="priceLabel">100,000</span> ل.س</label>
+        <input type="range" id="priceRange" min="0" max="100000" step="1000" value="100000" />
+      </div>
     </section>
 
-    <!-- Dishes grid -->
-    <section class="dishes-grid" id="dishesGrid">
+    <div class="dishes-grid" id="dishesGrid">
       <p class="loading">جاري التحميل...</p>
-    </section>
+    </div>
   </main>
+
+  <!-- Cart panel -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <h3>🛒 سلة الطلبات</h3>
+      <button id="cartClose" class="cart-close">✕</button>
+    </div>
+    <div class="cart-body" id="cartBody">
+      <p class="cart-empty">السلة فارغة</p>
+    </div>
+    <div class="cart-footer" id="cartFooter" style="display:none;">
+      <div class="cart-total-row">
+        <span>المجموع:</span>
+        <span id="cartTotal">0</span>
+      </div>
+      <button class="btn btn-primary cart-action-btn" id="whatsappBtn">📱 طلب عبر واتساب</button>
+      <button class="btn btn-success cart-action-btn" id="orderBtn">✅ إرسال الطلب</button>
+      <button class="btn btn-secondary cart-action-btn" id="clearCartBtn">🗑️ تفريغ السلة</button>
+    </div>
+  </div>
+
+  <!-- Order form modal -->
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal">
+      <h3>✅ تأكيد الطلب</h3>
+      <form id="orderForm">
+        <label>الاسم</label>
+        <input type="text" id="orderName" required />
+        <label>رقم الهاتف</label>
+        <input type="tel" id="orderPhone" />
+        <label>ملاحظات</label>
+        <textarea id="orderNotes"></textarea>
+        <div id="orderSummary" style="margin:16px 0;padding:14px;background:#f5f5f0;border-radius:8px;font-size:.9rem;"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="orderCancel">إلغاء</button>
+          <button type="submit" class="btn btn-success">إرسال الطلب</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal" style="text-align:center;">
+      <h3>✅ تم إرسال الطلب بنجاح!</h3>
+      <p style="margin:20px 0;font-size:1.1rem;">سيتم التواصل معك قريبًا</p>
+      <button class="btn btn-primary" id="successClose">حسنًا</button>
+    </div>
+  </div>
 
   <footer>
     <p>© 2026 منيو بروستد الزواق - جميع الحقوق محفوظة</p>

@@ -12,11 +12,14 @@
       <div class="logo-area">
         <img src="logo.jpg" alt="بروستد الزواق" class="logo" />
         <div class="site-title">
-          <h1>منيو بروستد الزواق</h1>
-          <span class="site-title-en">Broasted Al-Zawq Menu</span>
+          <h1>بروستد الزواق</h1>
+          <span class="site-title-en">Broasted Al-Zawq</span>
         </div>
       </div>
-      <a href="index.html" class="admin-link">⬅ العودة للمنيو</a>
+      <div class="header-actions">
+        <a href="admin-orders.html" class="admin-link">📋 الطلبات</a>
+        <a href="index.html" class="admin-link">⬅ العودة</a>
+      </div>
     </div>
   </header>
 
@@ -35,17 +38,18 @@
         <button class="btn btn-success" id="addDishBtn">➕ إضافة طبق</button>
         <button class="btn btn-warning" id="addCategoryBtn">📂 إضافة قسم</button>
         <button class="btn btn-secondary" id="changePwBtn">🔑 تغيير كلمة السر</button>
+        <button class="btn btn-primary" id="whatsappSettingsBtn">📱 واتساب</button>
         <button class="btn btn-primary" id="showQrBtn">📱 QR كود</button>
         <button class="btn btn-secondary" id="logoutBtn">🚪 تسجيل الخروج</button>
       </div>
 
-      <!-- Dishes table -->
       <table class="admin-table">
         <thead>
           <tr>
             <th>الصورة</th>
             <th>الاسم</th>
             <th>القسم</th>
+            <th>الوسم</th>
             <th>السعر</th>
             <th>الوقت</th>
             <th>تحكم</th>
@@ -56,40 +60,37 @@
     </section>
   </main>
 
-  <!-- Modal -->
+  <!-- Dish modal -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <h3 id="modalTitle">إضافة طبق</h3>
       <form id="dishForm" enctype="multipart/form-data">
         <input type="hidden" id="editId" />
-
         <label>الاسم (عربي)</label>
         <input type="text" id="nameAr" required />
-
         <label>الاسم (إنجليزي)</label>
         <input type="text" id="nameEn" />
-
         <label>الوصف (عربي)</label>
         <textarea id="descAr"></textarea>
-
         <label>الوصف (إنجليزي)</label>
         <textarea id="descEn"></textarea>
-
         <label>السعر (ل.س)</label>
         <input type="number" id="price" required />
-
         <label>مدة الطهي (دقيقة)</label>
         <input type="number" id="cookingTime" />
-
         <label>القسم</label>
         <select id="categoryId" required></select>
-
+        <label>الوسم</label>
+        <select id="badge">
+          <option value="">بدون</option>
+          <option value="new">جديد 🔥</option>
+          <option value="bestseller">الأكثر مبيعًا 🏆</option>
+        </select>
         <label>الصورة</label>
         <input type="file" id="image" accept="image/*" />
         <div id="imagePreview" style="margin-top:8px;display:none;">
           <img id="previewImg" style="width:80px;height:80px;border-radius:8px;object-fit:cover;border:2px solid var(--border);" />
         </div>
-
         <div class="btn-row">
           <button type="button" class="btn btn-secondary" id="cancelBtn">إلغاء</button>
           <button type="submit" class="btn btn-primary" id="saveBtn">حفظ</button>
@@ -110,6 +111,22 @@
         <div class="btn-row">
           <button type="button" class="btn btn-secondary" id="cancelCatBtn">إلغاء</button>
           <button type="submit" class="btn btn-success">إضافة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- WhatsApp settings modal -->
+  <div class="modal-overlay" id="whatsappModal">
+    <div class="modal">
+      <h3>📱 إعدادات واتساب</h3>
+      <form id="whatsappForm">
+        <label>رقم الهاتف (مع مفتاح الدولة بدون + أو 00)</label>
+        <input type="text" id="whatsappNumber" placeholder="مثال: 9639XXXXXXXX" />
+        <p style="color:#888;font-size:.85rem;margin-top:4px;">سيظهر زر "طلب عبر واتساب" للزبون</p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="cancelWhatsappBtn">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ</button>
         </div>
       </form>
     </div>

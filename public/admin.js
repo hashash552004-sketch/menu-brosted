@@ -7,20 +7,17 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   const password = document.getElementById('passwordInput').value;
   const errEl = document.getElementById('loginError');
   errEl.style.display = 'none';
-
   const res = await fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password }),
   });
-
   if (!res.ok) {
     const data = await res.json();
     errEl.textContent = data.error || 'كلمة السر خطأ';
     errEl.style.display = 'block';
     return;
   }
-
   const data = await res.json();
   token = data.token;
   document.getElementById('loginSection').style.display = 'none';
@@ -37,9 +34,6 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   document.getElementById('passwordInput').value = '';
 });
 
-// ------------------------------------------------------------
-//  Auth header helper
-// ------------------------------------------------------------
 function authHeaders(headers = {}) {
   headers['Authorization'] = token;
   return headers;
@@ -53,13 +47,14 @@ async function loadDishes() {
   const dishes = await res.json();
   const tbody = document.getElementById('dishesBody');
   tbody.innerHTML = '';
-
   dishes.forEach(d => {
     const tr = document.createElement('tr');
+    let badgeText = { 'new': 'جديد 🔥', 'bestseller': '🏆 الأكثر مبيعًا' }[d.badge] || '—';
     tr.innerHTML = `
       <td>${d.image ? `<img src="${d.image}" />` : '🍽'}</td>
       <td>${d.name_ar}</td>
       <td>${d.category_name_ar}</td>
+      <td style="font-size:.8rem;">${badgeText}</td>
       <td>${Number(d.price).toLocaleString()}</td>
       <td>${d.cooking_time} د</td>
       <td>
@@ -69,7 +64,6 @@ async function loadDishes() {
     `;
     tbody.appendChild(tr);
   });
-
   document.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => editDish(btn.dataset.id));
   });
@@ -103,6 +97,7 @@ document.getElementById('addDishBtn').addEventListener('click', () => {
   document.getElementById('dishForm').reset();
   document.getElementById('editId').value = '';
   document.getElementById('saveBtn').textContent = 'إضافة';
+  document.getElementById('badge').value = '';
   populateCategorySelect();
   document.getElementById('imagePreview').style.display = 'none';
   document.getElementById('modalOverlay').classList.add('active');
@@ -111,7 +106,6 @@ document.getElementById('addDishBtn').addEventListener('click', () => {
 document.getElementById('cancelBtn').addEventListener('click', () => {
   document.getElementById('modalOverlay').classList.remove('active');
 });
-
 document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) document.getElementById('modalOverlay').classList.remove('active');
 });
@@ -123,7 +117,6 @@ async function editDish(id) {
   const res = await fetch('/api/dishes/' + id);
   const d = await res.json();
   if (!d || d.error) return;
-
   document.getElementById('modalTitle').textContent = '✏️ تعديل طبق';
   document.getElementById('editId').value = d.id;
   document.getElementById('nameAr').value = d.name_ar;
@@ -132,14 +125,13 @@ async function editDish(id) {
   document.getElementById('descEn').value = d.description || '';
   document.getElementById('price').value = d.price;
   document.getElementById('cookingTime').value = d.cooking_time;
+  document.getElementById('badge').value = d.badge || '';
   document.getElementById('saveBtn').textContent = 'تحديث';
   populateCategorySelect(d.category_id);
-
   const preview = document.getElementById('imagePreview');
   const previewImg = document.getElementById('previewImg');
   if (d.image) { previewImg.src = d.image; preview.style.display = 'block'; }
   else { preview.style.display = 'none'; }
-
   document.getElementById('modalOverlay').classList.add('active');
 }
 
@@ -151,7 +143,6 @@ document.getElementById('dishForm').addEventListener('submit', async (e) => {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.textContent = 'جاري الحفظ...';
-
   try {
     const id = document.getElementById('editId').value;
     const fd = new FormData();
@@ -162,7 +153,7 @@ document.getElementById('dishForm').addEventListener('submit', async (e) => {
     fd.append('price', document.getElementById('price').value);
     fd.append('cooking_time', document.getElementById('cookingTime').value);
     fd.append('category_id', document.getElementById('categoryId').value);
-
+    fd.append('badge', document.getElementById('badge').value);
     const fileInput = document.getElementById('image');
     if (fileInput.files.length) {
       if (fileInput.files[0].size > 5 * 1024 * 1024) {
@@ -173,14 +164,12 @@ document.getElementById('dishForm').addEventListener('submit', async (e) => {
       }
       fd.append('image', fileInput.files[0]);
     }
-
     let res;
     if (id) {
       res = await fetch('/api/admin/dishes/' + id, { method: 'PUT', headers: authHeaders(), body: fd });
     } else {
       res = await fetch('/api/admin/dishes', { method: 'POST', headers: authHeaders(), body: fd });
     }
-
     if (!res.ok) {
       let msg;
       try { const err = await res.json(); msg = err.error || res.statusText; } catch { msg = 'خطأ ' + res.status; }
@@ -189,7 +178,6 @@ document.getElementById('dishForm').addEventListener('submit', async (e) => {
       btn.textContent = id ? 'تحديث' : 'إضافة';
       return;
     }
-
     document.getElementById('modalOverlay').classList.remove('active');
     loadDishes();
   } catch (err) {
@@ -217,97 +205,108 @@ document.getElementById('addCategoryBtn').addEventListener('click', () => {
   document.getElementById('catForm').reset();
   document.getElementById('catModalOverlay').classList.add('active');
 });
-
 document.getElementById('cancelCatBtn').addEventListener('click', () => {
   document.getElementById('catModalOverlay').classList.remove('active');
 });
-
 document.getElementById('catModalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) document.getElementById('catModalOverlay').classList.remove('active');
 });
-
 document.getElementById('catForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name_ar = document.getElementById('catNameAr').value;
   const name = document.getElementById('catNameEn').value;
-
   const res = await fetch('/api/admin/categories', {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ name, name_ar }),
   });
-
   if (!res.ok) return alert('حدث خطأ أثناء إضافة القسم');
-
   document.getElementById('catModalOverlay').classList.remove('active');
   populateCategorySelect();
   loadDishes();
 });
 
 // ------------------------------------------------------------
-//  Password change modal
+//  Password change
 // ------------------------------------------------------------
 document.getElementById('changePwBtn').addEventListener('click', () => {
   document.getElementById('pwForm').reset();
   document.getElementById('pwError').style.display = 'none';
   document.getElementById('pwModalOverlay').classList.add('active');
 });
-
 document.getElementById('cancelPwBtn').addEventListener('click', () => {
   document.getElementById('pwModalOverlay').classList.remove('active');
 });
-
 document.getElementById('pwModalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) document.getElementById('pwModalOverlay').classList.remove('active');
 });
-
 document.getElementById('pwForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const errEl = document.getElementById('pwError');
   errEl.style.display = 'none';
-
   const current = document.getElementById('currentPassword').value;
   const newPw = document.getElementById('newPassword').value;
   const confirm = document.getElementById('confirmPassword').value;
-
   if (newPw !== confirm) {
     errEl.textContent = 'كلمة السر الجديدة وتأكيدها غير متطابقين';
     errEl.style.display = 'block';
     return;
   }
-
   const res = await fetch('/api/admin/password', {
     method: 'PUT',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ current_password: current, new_password: newPw }),
   });
-
   if (!res.ok) {
     const data = await res.json();
     errEl.textContent = data.error || 'حدث خطأ';
     errEl.style.display = 'block';
     return;
   }
-
   document.getElementById('pwModalOverlay').classList.remove('active');
   alert('✅ تم تغيير كلمة السر بنجاح');
 });
 
 // ------------------------------------------------------------
-//  QR code modal
+//  WhatsApp settings
+// ------------------------------------------------------------
+document.getElementById('whatsappSettingsBtn').addEventListener('click', async () => {
+  const res = await fetch('/api/settings/whatsapp_number');
+  const data = await res.json();
+  document.getElementById('whatsappNumber').value = data.value || '';
+  document.getElementById('whatsappModal').classList.add('active');
+});
+document.getElementById('cancelWhatsappBtn').addEventListener('click', () => {
+  document.getElementById('whatsappModal').classList.remove('active');
+});
+document.getElementById('whatsappModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) document.getElementById('whatsappModal').classList.remove('active');
+});
+document.getElementById('whatsappForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const value = document.getElementById('whatsappNumber').value;
+  const res = await fetch('/api/admin/settings', {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ key: 'whatsapp_number', value }),
+  });
+  if (!res.ok) return alert('حدث خطأ');
+  document.getElementById('whatsappModal').classList.remove('active');
+  alert('✅ تم حفظ رقم واتساب');
+});
+
+// ------------------------------------------------------------
+//  QR code
 // ------------------------------------------------------------
 document.getElementById('showQrBtn').addEventListener('click', async () => {
   const baseUrl = window.location.origin;
   document.getElementById('qrUrlText').textContent = baseUrl;
-  const qrImg = document.getElementById('qrImage');
-  qrImg.src = '/api/qrcode?url=' + encodeURIComponent(baseUrl);
+  document.getElementById('qrImage').src = '/api/qrcode?url=' + encodeURIComponent(baseUrl);
   document.getElementById('qrModalOverlay').classList.add('active');
 });
-
 document.getElementById('closeQrBtn').addEventListener('click', () => {
   document.getElementById('qrModalOverlay').classList.remove('active');
 });
-
 document.getElementById('qrModalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) document.getElementById('qrModalOverlay').classList.remove('active');
 });

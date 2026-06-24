@@ -31,8 +31,10 @@ if (IS_SQLITE) {
     const client = await pool.connect();
     try {
       await client.query('CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL)');
-      await client.query('CREATE TABLE IF NOT EXISTS dishes (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL, description TEXT, description_ar TEXT, price REAL NOT NULL, cooking_time INTEGER, image TEXT, category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE, created_at TIMESTAMP DEFAULT NOW())');
+      await client.query('CREATE TABLE IF NOT EXISTS dishes (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL, description TEXT, description_ar TEXT, price REAL NOT NULL, cooking_time INTEGER, image TEXT, badge TEXT DEFAULT \'\', category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE, created_at TIMESTAMP DEFAULT NOW())');
       await client.query('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+      await client.query('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, customer_name TEXT, phone TEXT, notes TEXT, total REAL NOT NULL, status TEXT DEFAULT \'pending\', created_at TIMESTAMP DEFAULT NOW())');
+      await client.query('CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE, dish_id INTEGER NOT NULL REFERENCES dishes(id), dish_name_ar TEXT NOT NULL, quantity INTEGER NOT NULL, price REAL NOT NULL)');
     } finally {
       client.release();
     }
@@ -98,6 +100,7 @@ async function initDB() {
         price REAL NOT NULL,
         cooking_time INTEGER,
         image TEXT,
+        badge TEXT DEFAULT '',
         category_id INTEGER NOT NULL,
         created_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
@@ -106,10 +109,31 @@ async function initDB() {
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customer_name TEXT,
+        phone TEXT,
+        notes TEXT,
+        total REAL NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+      CREATE TABLE IF NOT EXISTS order_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        dish_id INTEGER NOT NULL,
+        dish_name_ar TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        price REAL NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+      );
     `);
     // seed password
     const row = db.prepare("SELECT value FROM settings WHERE key = 'admin_password'").get();
     if (!row) db.prepare("INSERT INTO settings (key, value) VALUES ('admin_password', 'hashash')").run();
+    // seed whatsapp default
+    const wsp = db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_number'").get();
+    if (!wsp) db.prepare("INSERT INTO settings (key, value) VALUES ('whatsapp_number', '')").run();
     // seed data
     const cnt = db.prepare('SELECT COUNT(*) as c FROM categories').get();
     if (cnt.c === 0) await seedData();
@@ -117,6 +141,8 @@ async function initDB() {
     await seedDb();
     const row = await qRow("SELECT value FROM settings WHERE key = 'admin_password'");
     if (!row) await q("INSERT INTO settings (key, value) VALUES ('admin_password', 'hashash')");
+    const wsp = await qRow("SELECT value FROM settings WHERE key = 'whatsapp_number'");
+    if (!wsp) await q("INSERT INTO settings (key, value) VALUES ('whatsapp_number', '')");
     const cnt = await qRow('SELECT COUNT(*) as c FROM categories');
     if (parseInt(cnt.c) === 0) await seedData();
   }
@@ -262,11 +288,32 @@ app.get('/api/dishes/:id', async (req, res) => {
   res.json(dish);
 });
 
+app.get('/api/dishes/popular', async (req, res) => {
+  const sql = `
+    SELECT d.*, c.name_ar as category_name_ar, COALESCE(oi.cnt, 0) as order_count
+    FROM dishes d
+    JOIN categories c ON c.id = d.category_id
+    LEFT JOIN (SELECT dish_id, SUM(quantity) as cnt FROM order_items GROUP BY dish_id) oi ON oi.dish_id = d.id
+    ORDER BY order_count DESC
+    LIMIT 10
+  `;
+  const dishes = await q(sql);
+  res.json(dishes);
+});
+
+// ------------------------------------------------------------
+//  7.5 Public settings
+// ------------------------------------------------------------
+app.get('/api/settings/:key', async (req, res) => {
+  const row = await qRow('SELECT value FROM settings WHERE key = ?', [req.params.key]);
+  res.json({ value: row ? row.value : '' });
+});
+
 // ------------------------------------------------------------
 //  8. Admin CRUD – dishes
 // ------------------------------------------------------------
 app.post('/api/admin/dishes', requireAuth, upload.single('image'), async (req, res) => {
-  const { name, name_ar, description, description_ar, price, cooking_time, category_id } = req.body;
+  const { name, name_ar, description, description_ar, price, cooking_time, category_id, badge } = req.body;
   let image = '';
   if (req.file) {
     if (IS_SQLITE) {
@@ -277,16 +324,16 @@ app.post('/api/admin/dishes', requireAuth, upload.single('image'), async (req, r
     }
   }
   const id = await qInsert(
-    'INSERT INTO dishes (name, name_ar, description, description_ar, price, cooking_time, image, category_id) VALUES (?,?,?,?,?,?,?,?)',
-    [name, name_ar, description, description_ar, Number(price), Number(cooking_time), image, Number(category_id)]
+    'INSERT INTO dishes (name, name_ar, description, description_ar, price, cooking_time, image, category_id, badge) VALUES (?,?,?,?,?,?,?,?,?)',
+    [name, name_ar, description, description_ar, Number(price), Number(cooking_time), image, Number(category_id), badge || '']
   );
   res.json({ id: Number(id) });
 });
 
 app.put('/api/admin/dishes/:id', requireAuth, upload.single('image'), async (req, res) => {
-  const { name, name_ar, description, description_ar, price, cooking_time, category_id } = req.body;
-  const fields = ['name = ?', 'name_ar = ?', 'description = ?', 'description_ar = ?', 'price = ?', 'cooking_time = ?', 'category_id = ?'];
-  const params = [name, name_ar, description, description_ar, Number(price), Number(cooking_time), Number(category_id)];
+  const { name, name_ar, description, description_ar, price, cooking_time, category_id, badge } = req.body;
+  const fields = ['name = ?', 'name_ar = ?', 'description = ?', 'description_ar = ?', 'price = ?', 'cooking_time = ?', 'category_id = ?', 'badge = ?'];
+  const params = [name, name_ar, description, description_ar, Number(price), Number(cooking_time), Number(category_id), badge || ''];
 
   if (req.file) {
     if (IS_SQLITE) {
@@ -336,7 +383,60 @@ app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
 });
 
 // ------------------------------------------------------------
-//  10. QR code
+//  10. Orders API
+// ------------------------------------------------------------
+app.post('/api/orders', async (req, res) => {
+  const { customer_name, phone, notes, items } = req.body;
+  if (!customer_name || !items || !items.length) {
+    return res.status(400).json({ error: 'الاسم والأصناف مطلوبة' });
+  }
+  const total = items.reduce((s, i) => s + Number(i.price) * Number(i.quantity), 0);
+  const orderId = await qInsert(
+    'INSERT INTO orders (customer_name, phone, notes, total) VALUES (?,?,?,?)',
+    [customer_name, phone || '', notes || '', total]
+  );
+  for (const item of items) {
+    await q(
+      'INSERT INTO order_items (order_id, dish_id, dish_name_ar, quantity, price) VALUES (?,?,?,?,?)',
+      [orderId, Number(item.dish_id), item.dish_name_ar, Number(item.quantity), Number(item.price)]
+    );
+  }
+  res.json({ id: Number(orderId), total });
+});
+
+app.get('/api/admin/orders', requireAuth, async (req, res) => {
+  const orders = await q('SELECT * FROM orders ORDER BY created_at DESC');
+  for (const order of orders) {
+    order.items = await q('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+  }
+  res.json(orders);
+});
+
+app.put('/api/admin/orders/:id', requireAuth, async (req, res) => {
+  const { status } = req.body;
+  if (!['pending', 'confirmed', 'completed', 'cancelled'].includes(status)) {
+    return res.status(400).json({ error: 'حالة غير صالحة' });
+  }
+  await q('UPDATE orders SET status = ? WHERE id = ?', [status, Number(req.params.id)]);
+  res.json({ ok: true });
+});
+
+// ------------------------------------------------------------
+//  11. Admin settings
+// ------------------------------------------------------------
+app.put('/api/admin/settings', requireAuth, async (req, res) => {
+  const { key, value } = req.body;
+  const row = await qRow('SELECT value FROM settings WHERE key = ?', [key]);
+  if (row) {
+    await q('UPDATE settings SET value = ? WHERE key = ?', [value, key]);
+  } else {
+    await q('INSERT INTO settings (key, value) VALUES (?,?)', [key, value]);
+  }
+  res.json({ ok: true });
+});
+
+// ------------------------------------------------------------
+//  12. QR code
 // ------------------------------------------------------------
 app.get('/api/qrcode', async (req, res) => {
   const url = req.query.url || `${req.protocol}://${req.get('host')}`;
@@ -349,7 +449,7 @@ app.get('/api/qrcode', async (req, res) => {
 });
 
 // ------------------------------------------------------------
-//  11. Start
+//  13. Start
 // ------------------------------------------------------------
 async function start() {
   await initDB();

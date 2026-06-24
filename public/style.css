@@ -138,6 +138,34 @@ header {
   box-shadow: 0 0 0 3px rgba(230,126,34,.15);
 }
 
+.filters select {
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat left 14px center;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 14px;
+  padding-left: 36px;
+  color: var(--black-mid);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.price-filter input[type="number"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: .95rem;
+  font-family: inherit;
+  transition: .3s;
+  background: #fff;
+}
+
+.price-filter input[type="number"]:focus {
+  border-color: var(--orange);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(230,126,34,.12);
+}
+
 /* ------------------------------------------------------------
    Dishes grid
    ------------------------------------------------------------ */
@@ -462,37 +490,6 @@ footer {
 .badge-new { background: #e74c3c; color: #fff; }
 
 .badge-bestseller { background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; }
-
-/* ------------------------------------------------------------
-   Price filter
-   ------------------------------------------------------------ */
-.price-filter {
-  flex: 1;
-  min-width: 200px;
-}
-
-.price-filter label {
-  display: block;
-  font-size: .85rem;
-  color: var(--gray);
-  margin-bottom: 4px;
-}
-
-.price-filter input[type="number"] {
-  width: 100%;
-  padding: 10px 14px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  font-size: .95rem;
-  font-family: inherit;
-  transition: .3s;
-}
-
-.price-filter input[type="number"]:focus {
-  border-color: var(--orange);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(230,126,34,.12);
-}
 
 /* ------------------------------------------------------------
    Favorite button

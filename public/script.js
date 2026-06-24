@@ -290,7 +290,7 @@ async function sendWhatsApp() {
   const number = data.value;
   if (!number) { alert('رقم واتساب غير مضبوط في لوحة التحكم'); return; }
   const payment = getPaymentLabel(getPaymentMethod());
-  let msg = '🍽 طلب جديد من منيو بروستد الزواق\n------------------\n';
+  let msg = '🍽 طلب جديد من منيو بروستد الذواق\n------------------\n';
   cart.items.forEach(i => {
     msg += `${i.dish_name_ar} × ${i.quantity} = ${Number(i.price * i.quantity).toLocaleString()} ل.س\n`;
   });

@@ -1,7 +1,7 @@
 {
   "name": "menu-syria",
   "version": "1.0.0",
-  "description": "موقع منيو بروستد الزواق",
+  "description": "موقع منيو بروستد الذواق",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

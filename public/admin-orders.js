@@ -82,12 +82,13 @@ async function loadOrders() {
         </div>
         ${order.notes ? `<div class="order-notes">📝 ${order.notes}</div>` : ''}
         <div class="order-total">المجموع: ${Number(order.total).toLocaleString()} ل.س</div>
-        <div class="order-actions">
-          <select class="status-select" data-id="${order.id}">
+        <div class="order-actions" style="display:flex;gap:8px;">
+          <select class="status-select" data-id="${order.id}" style="flex:1;">
             ${['pending', 'confirmed', 'completed', 'cancelled'].map(s =>
               `<option value="${s}" ${s === order.status ? 'selected' : ''}>${statusText(s)}</option>`
             ).join('')}
           </select>
+          <button class="btn btn-danger btn-delete-order" data-id="${order.id}" style="padding:8px 16px;">🗑</button>
         </div>
       `;
       container.appendChild(card);
@@ -98,6 +99,16 @@ async function loadOrders() {
           method: 'PUT',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ status: sel.value }),
+        });
+        loadOrders();
+      });
+    });
+    document.querySelectorAll('.btn-delete-order').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('هل أنت متأكد من حذف الطلب رقم ' + btn.dataset.id + '؟')) return;
+        await fetch('/api/admin/orders/' + btn.dataset.id, {
+          method: 'DELETE',
+          headers: authHeaders(),
         });
         loadOrders();
       });

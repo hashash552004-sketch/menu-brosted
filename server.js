@@ -428,6 +428,12 @@ app.put('/api/admin/orders/:id', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.delete('/api/admin/orders/:id', requireAuth, async (req, res) => {
+  await q('DELETE FROM order_items WHERE order_id = ?', [Number(req.params.id)]);
+  await q('DELETE FROM orders WHERE id = ?', [Number(req.params.id)]);
+  res.json({ ok: true });
+});
+
 // ------------------------------------------------------------
 //  11. Admin settings
 // ------------------------------------------------------------

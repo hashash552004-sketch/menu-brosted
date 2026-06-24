@@ -24,6 +24,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   document.getElementById('adminPanel').style.display = 'block';
   loadDishes();
   populateCategorySelect();
+  loadCategoriesList();
 });
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -224,6 +225,7 @@ document.getElementById('catForm').addEventListener('submit', async (e) => {
   document.getElementById('catModalOverlay').classList.remove('active');
   populateCategorySelect();
   loadDishes();
+  loadCategoriesList();
 });
 
 // ------------------------------------------------------------
@@ -266,6 +268,32 @@ document.getElementById('pwForm').addEventListener('submit', async (e) => {
   document.getElementById('pwModalOverlay').classList.remove('active');
   alert('✅ تم تغيير كلمة السر بنجاح');
 });
+
+// ------------------------------------------------------------
+//  Category list management
+// ------------------------------------------------------------
+async function loadCategoriesList() {
+  const res = await fetch('/api/categories');
+  const cats = await res.json();
+  const container = document.getElementById('categoriesList');
+  container.innerHTML = '';
+  cats.forEach(c => {
+    const tag = document.createElement('span');
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:var(--orange-soft);border:1px solid var(--orange);border-radius:8px;padding:6px 14px;font-size:.85rem;font-weight:600;color:var(--orange-dark);';
+    tag.innerHTML = `${c.name_ar} <button class="btn btn-danger btn-delete-cat" data-id="${c.id}" style="padding:2px 8px;font-size:.7rem;">✕</button>`;
+    container.appendChild(tag);
+  });
+  document.querySelectorAll('.btn-delete-cat').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('هل أنت متأكد من حذف هذا القسم؟')) return;
+      const res = await fetch('/api/admin/categories/' + btn.dataset.id, { method: 'DELETE', headers: authHeaders() });
+      if (!res.ok) return alert('حدث خطأ. تأكد من عدم وجود أطباق في هذا القسم');
+      loadCategoriesList();
+      populateCategorySelect();
+      loadDishes();
+    });
+  });
+}
 
 // ------------------------------------------------------------
 //  WhatsApp settings

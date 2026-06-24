@@ -35,6 +35,9 @@ if (IS_SQLITE) {
       await client.query('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
       await client.query('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, customer_name TEXT, phone TEXT, notes TEXT, total REAL NOT NULL, payment_method TEXT DEFAULT \'cash\', status TEXT DEFAULT \'pending\', created_at TIMESTAMP DEFAULT NOW())');
       await client.query('CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE, dish_id INTEGER NOT NULL REFERENCES dishes(id), dish_name_ar TEXT NOT NULL, quantity INTEGER NOT NULL, price REAL NOT NULL)');
+      // migrations for existing tables
+      await client.query('ALTER TABLE dishes ADD COLUMN IF NOT EXISTS badge TEXT DEFAULT \'\'');
+      await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT \'cash\'');
     } finally {
       client.release();
     }
@@ -129,6 +132,9 @@ async function initDB() {
         FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
       );
     `);
+    // migrations for existing tables
+    try { db.exec("ALTER TABLE dishes ADD COLUMN badge TEXT DEFAULT ''"); } catch {}
+    try { db.exec("ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'cash'"); } catch {}
     // seed password
     const row = db.prepare("SELECT value FROM settings WHERE key = 'admin_password'").get();
     if (!row) db.prepare("INSERT INTO settings (key, value) VALUES ('admin_password', 'hashash')").run();

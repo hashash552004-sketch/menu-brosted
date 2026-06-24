@@ -42,18 +42,24 @@ if (IS_SQLITE) {
 // ------------------------------------------------------------
 //  Unified async query helpers
 // ------------------------------------------------------------
+function pgSql(sql, params) {
+  let idx = 0;
+  const pg = sql.replace(/\?/g, () => `$${++idx}`);
+  return { text: pg, params: params || [] };
+}
+
 function q(sql, params) {
   if (IS_SQLITE) {
     const stmt = db.prepare(sql);
     if (/^SELECT/i.test(sql.trim())) return Promise.resolve(stmt.all(...(params || [])));
     return Promise.resolve(stmt.run(...(params || [])));
   }
-  return db.query(sql, params).then(r => r.rows);
+  return db.query(pgSql(sql, params)).then(r => r.rows);
 }
 
 function qRow(sql, params) {
   if (IS_SQLITE) return Promise.resolve(db.prepare(sql).get(...(params || [])));
-  return db.query(sql, params).then(r => r.rows[0] || null);
+  return db.query(pgSql(sql, params)).then(r => r.rows[0] || null);
 }
 
 function qExec(sql) {
@@ -66,7 +72,8 @@ async function qInsert(sql, params) {
     const r = db.prepare(sql).run(...(params || []));
     return r.lastInsertRowid;
   }
-  const r = await db.query(sql + ' RETURNING id', params);
+  const pg = pgSql(sql + ' RETURNING id', params);
+  const r = await db.query(pg);
   return r.rows[0].id;
 }
 

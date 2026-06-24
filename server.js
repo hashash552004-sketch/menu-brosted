@@ -45,7 +45,8 @@ if (IS_SQLITE) {
 function pgSql(sql, params) {
   let idx = 0;
   const pg = sql.replace(/\?/g, () => `$${++idx}`);
-  return { text: pg, params: params || [] };
+  const p = params || [];
+  return p.length ? { text: pg, values: p } : pg;
 }
 
 function q(sql, params) {

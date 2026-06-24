@@ -30,29 +30,9 @@ if (IS_SQLITE) {
   seedDb = async () => {
     const client = await pool.connect();
     try {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS categories (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          name_ar TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS dishes (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          name_ar TEXT NOT NULL,
-          description TEXT,
-          description_ar TEXT,
-          price REAL NOT NULL,
-          cooking_time INTEGER,
-          image TEXT,
-          category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-          created_at TIMESTAMP DEFAULT NOW()
-        );
-        CREATE TABLE IF NOT EXISTS settings (
-          key TEXT PRIMARY KEY,
-          value TEXT NOT NULL
-        );
-      `);
+      await client.query('CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL)');
+      await client.query('CREATE TABLE IF NOT EXISTS dishes (id SERIAL PRIMARY KEY, name TEXT NOT NULL, name_ar TEXT NOT NULL, description TEXT, description_ar TEXT, price REAL NOT NULL, cooking_time INTEGER, image TEXT, category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE, created_at TIMESTAMP DEFAULT NOW())');
+      await client.query('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
     } finally {
       client.release();
     }
@@ -386,4 +366,9 @@ function getLocalIP() {
   return null;
 }
 
-start().catch(err => { console.error(err); process.exit(1); });
+start().catch(err => {
+  console.error('ERROR STARTING SERVER:');
+  console.error(err.message || err);
+  console.error(err.stack || '');
+  process.exit(1);
+});

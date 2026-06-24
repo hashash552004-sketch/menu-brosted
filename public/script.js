@@ -361,14 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('orderPhone').value = '';
     document.getElementById('orderNotes').value = '';
     renderCartPanel();
+    closeCart();
     orderModal.classList.add('active');
   });
 
   document.getElementById('orderCancel').addEventListener('click', () => {
     orderModal.classList.remove('active');
+    document.getElementById('cartToggle').click();
   });
   orderModal.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) orderModal.classList.remove('active');
+    if (e.target === e.currentTarget) {
+      orderModal.classList.remove('active');
+      document.getElementById('cartToggle').click();
+    }
   });
 
   orderForm.addEventListener('submit', async (e) => {
